@@ -1,22 +1,24 @@
-const CACHE_NAME = "smart-list-v1";
+const CACHE_NAME = "smartlist-v1";
 
 const APP_FILES = [
 
-"/",
+"/Pwa/",
 
-"/index.html",
+"/Pwa/index.html",
 
-"/manifest.json",
+"/Pwa/manifest.json",
 
-"/icons/icon-192.png",
+"/Pwa/icons/icon-192.png",
 
-"/icons/icon-512.png",
+"/Pwa/icons/icon-512.png",
 
-"/icons/apple-touch-icon.png"
+"/Pwa/icons/apple-touch-icon.png",
+
+"/Pwa/icons/maskable-512.png"
 
 ];
 
-self.addEventListener("install", event=>{
+self.addEventListener("install",event=>{
 
 event.waitUntil(
 
@@ -60,11 +62,7 @@ event.respondWith(
 
 caches.match(event.request)
 
-.then(response=>{
-
-return response || fetch(event.request);
-
-})
+.then(r=>r||fetch(event.request))
 
 );
 

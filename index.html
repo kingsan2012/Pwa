@@ -414,7 +414,12 @@ html+=`
 <li>✏️ ویرایش آیتم‌ها</li>
 <li>🗑 حذف لیست یا آیتم</li>
 </ul>
-
+<button
+id="installBtn"
+class="primary"
+style="display:none;margin-top:15px">
+📲 نصب برنامه
+</button>
 <p>نسخه حرفه‌ای مدیریت خرید روزانه</p>
 </div>
 `;
@@ -476,6 +481,29 @@ navigator.serviceWorker.register('./service-worker.js');
 });
 
 }
+  let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt',e=>{
+
+e.preventDefault();
+
+deferredPrompt=e;
+
+installBtn.style.display='block';
+
+});
+
+installBtn.onclick=async()=>{
+
+installBtn.style.display='none';
+
+deferredPrompt.prompt();
+
+await deferredPrompt.userChoice;
+
+deferredPrompt=null;
+
+};
 </script>
 
 </body>

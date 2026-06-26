@@ -5,43 +5,32 @@
   "lang": "fa",
   "dir": "rtl",
 
-  "start_url": "/",
-
-  "scope": "/",
+  "id": "/Pwa/",
+  "start_url": "/Pwa/",
+  "scope": "/Pwa/",
 
   "display": "standalone",
-
   "orientation": "portrait",
 
   "background_color": "#F8FFF2",
-
   "theme_color": "#5BC236",
 
-  "categories": [
-    "shopping",
-    "productivity"
-  ],
-
   "icons": [
-
     {
-      "src": "icons/icon-192.png",
+      "src": "/Pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
-
     {
-      "src": "icons/icon-512.png",
+      "src": "/Pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
-
     {
-      "src": "icons/maskable-512.png",
+      "src": "/Pwa/icons/maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
-
   ]
 }

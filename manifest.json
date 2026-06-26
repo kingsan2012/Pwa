@@ -1,23 +1,47 @@
 {
-  "name": "Smart List Pro",
-  "short_name": "SmartList",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#f1f5f9",
-  "theme_color": "#2563eb",
-  "orientation": "portrait",
+  "name": "چک لیست خرید",
+  "short_name": "چک لیست",
+  "description": "مدیریت هوشمند خرید و دارو",
   "lang": "fa",
   "dir": "rtl",
+
+  "start_url": "/",
+
+  "scope": "/",
+
+  "display": "standalone",
+
+  "orientation": "portrait",
+
+  "background_color": "#F8FFF2",
+
+  "theme_color": "#5BC236",
+
+  "categories": [
+    "shopping",
+    "productivity"
+  ],
+
   "icons": [
+
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
+
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
+
   ]
 }

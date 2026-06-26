@@ -1,18 +1,470 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Smart List Pro">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Smart List Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* 🚫 disable text selection */
+*{
+box-sizing:border-box;
+font-family:'Vazirmatn',sans-serif;
+user-select:none;
+-webkit-user-select:none;
+-ms-user-select:none;
+}
+
+body{
+margin:0;
+background:#f1f5f9;
+}
+
+header{
+position:sticky;
+top:0;
+background:white;
+padding:10px 12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-weight:700;
+box-shadow:0 2px 10px rgba(0,0,0,.05);
+}
+
+#clock{font-size:12px;color:#64748b}
+
+.nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+justify-content:space-around;
+background:white;
+padding:10px 0;
+border-top:1px solid #eee;
+}
+
+.nav button{
+border:none;
+background:none;
+font-size:12px;
+cursor:pointer;
+color:#64748b;
+}
+
+.nav button.active{color:#2563eb;font-weight:700}
+
+.container{
+max-width:780px;
+margin:auto;
+padding:14px;
+padding-bottom:80px;
+}
+
+.card{
+background:white;
+padding:12px;
+border-radius:14px;
+margin-top:10px;
+box-shadow:0 4px 15px rgba(0,0,0,.06);
+animation:fadeIn .25s ease;
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin-top:8px;
+border-radius:10px;
+border:1px solid #ddd;
+}
+
+textarea{min-height:80px}
+
+button{
+border:none;
+padding:8px 10px;
+border-radius:8px;
+cursor:pointer;
+font-size:12px;
+}
+
+.primary{background:#2563eb;color:white}
+.danger{background:#ef4444;color:white}
+.success{background:#22c55e;color:white}
+
+.item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:6px 0;
+border-bottom:1px solid #f1f5f9;
+}
+
+.done{
+text-decoration:line-through;
+opacity:.5;
+}
+
+.catBox{
+margin-top:10px;
+padding:10px;
+background:#f8fafc;
+border-radius:10px;
+}
+
+.catTitle{
+font-weight:700;
+font-size:13px;
+margin-bottom:6px;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+</style>
 </head>
+
 <body>
-<h2>Smart List Pro</h2>
-<p>این فایل قالب پروژه است. کد کامل index.html که در گفتگو توسعه داده‌ایم را داخل این فایل قرار دهید.</p>
+
+<header>
+<div>🛒 Smart List Pro</div>
+<div id="clock"></div>
+</header>
+
+<div class="container">
+<div id="view"></div>
+</div>
+
+<div class="nav">
+<button onclick="setView('home')" id="nav-home">🏠</button>
+<button onclick="setView('active')" id="nav-active">📂</button>
+<button onclick="setView('create')" id="nav-create">➕</button>
+<button onclick="setView('done')" id="nav-done">✅</button>
+<button onclick="setView('settings')" id="nav-settings">⚙️</button>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+getFirestore,
+collection,
+addDoc,
+onSnapshot,
+doc,
+updateDoc,
+deleteDoc,
+getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyA...",
+authDomain:"smartshoppingpro-5b72d.firebaseapp.com",
+projectId:"smartshoppingpro-5b72d"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const col=collection(db,"lists");
+
+let DATA=[];
+let VIEW="home";
+let OPEN={};
+
+/* CLOCK */
+setInterval(()=>{
+document.getElementById("clock").innerText =
+new Date().toLocaleString("fa-IR");
+},1000);
+
+/* CATEGORY */
+const categories={
+"🛒 سوپرمارکتی":["پنیر","تخم","قهوه","کیک","ویفر","رب","لوبیا","عدس","شکلات","خرما","کشمش","ماکارونی","ترشی","گلاب","آبلیمو","نمک","نان","گوشت","مرغ","برنج"],
+"💊 دارویی":["پرگابالین","متفورمین","امپرازول","کارودیلول","هیدروکلرتیازید","اسپیرونولاکتون","رزوواستاتین","ناپروکسن","ملوکسیکام","آ اس آ","انسولین","متی مازول","ویتامین","نیتروگلیسیرین"],
+"👕 پوشاک":["جوراب","تی‌شرت","شلوار","کفش"],
+"🧴 بهداشتی":["شامپو","خوشبو"]
+};
+
+function detect(t){
+for(let c in categories){
+if(categories[c].some(k=>t.includes(k))) return c;
+}
+return "📦 سایر";
+}
+
+/* REALTIME */
+onSnapshot(col,snap=>{
+DATA=snap.docs.map(d=>({id:d.id,...d.data()}));
+render();
+});
+
+/* NAV */
+window.setView=(v)=>{
+VIEW=v;
+document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+document.getElementById("nav-"+v).classList.add("active");
+render();
+};
+
+/* CREATE */
+window.createList=async()=>{
+let name=listName.value;
+let text=items.value;
+if(!name||!text) return;
+
+let raw=text.split(/\n|،|,|\./g).map(x=>x.trim()).filter(Boolean);
+
+await addDoc(col,{
+name,
+status:"active",
+createdAt:Date.now(),
+items:raw.map(t=>({
+id:crypto.randomUUID(),
+text:t,
+done:false,
+cat:detect(t)
+}))
+});
+
+listName.value="";
+items.value="";
+setView("active");
+};
+
+/* TOGGLE + AUTO COMPLETE */
+window.toggleItem=async(lid,iid)=>{
+const ref=doc(db,"lists",lid);
+const snap=await getDoc(ref);
+let d=snap.data();
+
+d.items=d.items.map(i=>{
+if(i.id===iid) i.done=!i.done;
+return i;
+});
+
+let allDone = d.items.length>0 && d.items.every(i=>i.done);
+
+if(allDone){
+alert("🎉 لیست تکمیل شد!");
+d.status="done";
+setTimeout(()=>setView("done"),600);
+}else{
+d.status="active";
+}
+
+await updateDoc(ref,d);
+};
+
+/* EDIT */
+window.editItem=async(lid,iid)=>{
+let t=prompt("ویرایش آیتم:");
+if(!t) return;
+
+const ref=doc(db,"lists",lid);
+const snap=await getDoc(ref);
+let d=snap.data();
+
+d.items=d.items.map(i=>{
+if(i.id===iid){
+i.text=t;
+i.cat=detect(t);
+}
+return i;
+});
+
+await updateDoc(ref,d);
+};
+
+/* ADD */
+window.addItem=async(lid)=>{
+let t=prompt("آیتم جدید:");
+if(!t) return;
+
+const ref=doc(db,"lists",lid);
+const snap=await getDoc(ref);
+let d=snap.data();
+
+d.items.push({
+id:crypto.randomUUID(),
+text:t,
+done:false,
+cat:detect(t)
+});
+
+await updateDoc(ref,d);
+};
+
+/* DELETE ITEM */
+window.deleteItem=async(lid,iid)=>{
+const ref=doc(db,"lists",lid);
+const snap=await getDoc(ref);
+let d=snap.data();
+
+d.items=d.items.filter(i=>i.id!==iid);
+await updateDoc(ref,d);
+};
+
+/* DELETE LIST */
+window.deleteList=async(id)=>{
+if(!confirm("حذف کامل لیست؟")) return;
+await deleteDoc(doc(db,"lists",id));
+};
+
+/* TOGGLE LIST */
+window.toggleList=(id)=>{
+OPEN[id]=!OPEN[id];
+render();
+};
+
+/* RESET ALL */
+window.resetAll=async()=>{
+if(!confirm("حذف همه لیست‌ها؟")) return;
+for(let l of DATA){
+await deleteDoc(doc(db,"lists",l.id));
+}
+};
+
+/* LIST RENDER */
+function renderList(list){
+
+let grouped={};
+(list.items||[]).forEach(i=>{
+if(!grouped[i.cat]) grouped[i.cat]=[];
+grouped[i.cat].push(i);
+});
+
+return `
+<div class="card">
+
+<h3 onclick="toggleList('${list.id}')">
+${OPEN[list.id]?"🔽":"▶️"} ${list.name}
+</h3>
+
+<button class="danger" onclick="deleteList('${list.id}')">🗑 حذف لیست</button>
+<button class="success" onclick="addItem('${list.id}')">➕ آیتم</button>
+
+${OPEN[list.id] ? Object.keys(grouped).map(cat=>`
+
+<div class="catBox">
+<div class="catTitle">📂 ${cat}</div>
+
+${grouped[cat].map(i=>`
+<div class="item">
+
+<span onclick="toggleItem('${list.id}','${i.id}')" class="${i.done?'done':''}" style="cursor:pointer">
+${i.text}
+</span>
+
+<div>
+<button onclick="editItem('${list.id}','${i.id}')">✏️</button>
+<button onclick="deleteItem('${list.id}','${i.id}')">❌</button>
+</div>
+
+</div>
+`).join("")}
+
+</div>
+
+`).join("") : ""}
+
+</div>
+`;
+}
+
+/* MAIN VIEW */
+window.render=()=>{
+
+let html="";
+
+/* HOME RESTORED */
+if(VIEW==="home"){
+html+=`
+<div class="card">
+<h2>👋 خوش آمدی به Smart List Pro</h2>
+<p>اپ هوشمند مدیریت خرید و دارو</p>
+
+<h4>📌 راهنمای استفاده:</h4>
+<ul>
+<li>➕ ساخت لیست جدید</li>
+<li>☑️ کلیک روی آیتم برای انجام شدن</li>
+<li>📂 دسته‌بندی خودکار آیتم‌ها</li>
+<li>✏️ ویرایش آیتم‌ها</li>
+<li>🗑 حذف لیست یا آیتم</li>
+</ul>
+
+<p>نسخه حرفه‌ای مدیریت خرید روزانه</p>
+</div>
+`;
+}
+
+/* CREATE */
+if(VIEW==="create"){
+html+=`
+<div class="card">
+<h3>➕ ساخت لیست</h3>
+<input id="listName" placeholder="نام لیست">
+<textarea id="items" placeholder="هر خط یک آیتم"></textarea>
+<button class="primary" onclick="createList()">ساخت</button>
+</div>`;
+}
+
+/* ACTIVE */
+if(VIEW==="active"){
+DATA.filter(l=>l.status!=="done").forEach(l=>{
+html+=renderList(l);
+});
+}
+
+/* DONE */
+if(VIEW==="done"){
+DATA.filter(l=>l.status==="done").forEach(l=>{
+html+=renderList(l);
+});
+}
+
+/* SETTINGS RESTORED */
+if(VIEW==="settings"){
+
+let totalLists=DATA.length;
+let totalItems=DATA.reduce((s,l)=>s+(l.items?.length||0),0);
+
+html+=`
+<div class="card">
+<h3>⚙️ تنظیمات</h3>
+
+<p>📊 تعداد لیست‌ها: ${totalLists}</p>
+<p>📦 تعداد آیتم‌ها: ${totalItems}</p>
+
+<button class="danger" onclick="resetAll()">🧹 حذف همه لیست‌ها</button>
+</div>
+`;
+}
+
+document.getElementById("view").innerHTML=html;
+};
+
+setView("home");
+
+</script>
 <script>
-if('serviceWorker' in navigator){
-window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js'));
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js');
+  });
 }
 </script>
 </body>

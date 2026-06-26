@@ -1,27 +1,71 @@
-const CACHE = "smartlist-v1";
+const CACHE_NAME = "smart-list-v1";
 
-const urls = [
-    "/",
-    "/index.html",
-    "/manifest.json"
+const APP_FILES = [
+
+"/",
+
+"/index.html",
+
+"/manifest.json",
+
+"/icons/icon-192.png",
+
+"/icons/icon-512.png",
+
+"/icons/apple-touch-icon.png"
+
 ];
 
-self.addEventListener("install", e => {
-    e.waitUntil(
-        caches.open(CACHE).then(cache => cache.addAll(urls))
-    );
+self.addEventListener("install", event=>{
+
+event.waitUntil(
+
+caches.open(CACHE_NAME)
+
+.then(cache=>cache.addAll(APP_FILES))
+
+);
+
+self.skipWaiting();
+
 });
 
-self.addEventListener("fetch", e => {
+self.addEventListener("activate",event=>{
 
-    e.respondWith(
+event.waitUntil(
 
-        caches.match(e.request).then(res => {
+caches.keys().then(keys=>{
 
-            return res || fetch(e.request);
+return Promise.all(
 
-        })
+keys.filter(k=>k!==CACHE_NAME)
 
-    );
+.map(k=>caches.delete(k))
+
+);
+
+})
+
+);
+
+self.clients.claim();
+
+});
+
+self.addEventListener("fetch",event=>{
+
+if(event.request.method!=="GET") return;
+
+event.respondWith(
+
+caches.match(event.request)
+
+.then(response=>{
+
+return response || fetch(event.request);
+
+})
+
+);
 
 });

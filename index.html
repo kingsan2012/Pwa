@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/Pwa/manifest.json">
 
 <meta name="theme-color" content="#5BC236">
 
@@ -13,7 +13,7 @@
 
 <meta name="apple-mobile-web-app-title" content="چک لیست خرید">
 
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="/Pwa/icons/apple-touch-icon.png">
 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta charset="UTF-8">
@@ -476,10 +476,9 @@ if ('serviceWorker' in navigator) {
 
 window.addEventListener('load',()=>{
 
-navigator.serviceWorker.register('./service-worker.js');
-
-});
-
+navigator.serviceWorker.register('/Pwa/service-worker.js', {
+    scope: '/Pwa/'
+}););
 }
   let deferredPrompt;
 
